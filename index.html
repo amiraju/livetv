@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IPTV Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0c10;
+    --panel: #0f1318;
+    --card: #141920;
+    --border: #1e2730;
+    --accent: #00d4ff;
+    --accent2: #ff4d6d;
+    --green: #00ff9d;
+    --text: #c8d8e8;
+    --muted: #4a5a6a;
+    --sidebar-w: 260px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Rajdhani', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* SIDEBAR */
+  #sidebar {
+    width: var(--sidebar-w);
+    background: var(--panel);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+  }
+
+  #sidebar-header {
+    padding: 18px 16px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  #sidebar-header h1 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    letter-spacing: 3px;
+    color: var(--accent);
+    text-transform: uppercase;
+  }
+
+  #sidebar-header p {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+    margin-top: 3px;
+    letter-spacing: 1px;
+  }
+
+  #search-wrap {
+    padding: 12px 12px 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  #search {
+    width: 100%;
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 7px 10px;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 0.85rem;
+    letter-spacing: 1px;
+    outline: none;
+    border-radius: 2px;
+    transition: border-color 0.2s;
+  }
+  #search:focus { border-color: var(--accent); }
+  #search::placeholder { color: var(--muted); }
+
+  #group-tabs {
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    flex: 1;
+  }
+
+  .group-tab {
+    padding: 9px 16px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    cursor: pointer;
+    border-left: 2px solid transparent;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .group-tab:hover { color: var(--text); background: var(--card); }
+  .group-tab.active { color: var(--accent); border-left-color: var(--accent); background: rgba(0,212,255,0.05); }
+
+  .group-tab .count {
+    margin-left: auto;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+    background: var(--card);
+    padding: 1px 5px;
+    border-radius: 2px;
+  }
+  .group-tab.active .count { color: var(--accent); }
+
+  /* MAIN */
+  #main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* PLAYER */
+  #player-section {
+    background: #000;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+    height: 42vh;
+    flex-shrink: 0;
+  }
+
+  #video-container {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #video-container video {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: none;
+  }
+
+  #placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    height: 100%;
+    color: var(--muted);
+  }
+
+  #placeholder svg { opacity: 0.2; }
+
+  #placeholder p {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 2px;
+  }
+
+  #now-playing-bar {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    background: linear-gradient(transparent, rgba(0,0,0,0.85));
+    padding: 10px 14px 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  #live-badge {
+    background: var(--accent2);
+    color: #fff;
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    padding: 2px 6px;
+    display: none;
+  }
+
+  #now-playing-name {
+    font-size: 0.9rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: #fff;
+  }
+
+  #now-playing-url {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--muted);
+    margin-left: auto;
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* CHANNEL GRID */
+  #channel-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 14px 16px;
+  }
+
+  #group-title-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  #group-title-bar h2 {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  #group-title-bar .line {
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  #channel-count {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+  }
+
+  #channels {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 8px;
+  }
+
+  .ch-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 12px 10px;
+    cursor: pointer;
+    transition: all 0.15s;
+    border-radius: 2px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .ch-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 2px; height: 100%;
+    background: var(--accent);
+    transform: scaleY(0);
+    transition: transform 0.2s;
+    transform-origin: bottom;
+  }
+
+  .ch-card:hover { border-color: var(--accent); background: rgba(0,212,255,0.04); }
+  .ch-card:hover::before { transform: scaleY(1); }
+  .ch-card.active { border-color: var(--accent); background: rgba(0,212,255,0.08); }
+  .ch-card.active::before { transform: scaleY(1); background: var(--green); }
+
+  .ch-icon {
+    width: 32px; height: 32px;
+    background: var(--border);
+    border-radius: 2px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+  }
+
+  .ch-name {
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    color: var(--text);
+    line-height: 1.2;
+    word-break: break-word;
+  }
+
+  .ch-group {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.58rem;
+    color: var(--muted);
+    letter-spacing: 1px;
+  }
+
+  .ch-local-badge {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.55rem;
+    color: var(--green);
+    letter-spacing: 1px;
+  }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+  /* STATUS BAR */
+  #status-bar {
+    padding: 5px 16px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: var(--panel);
+    flex-shrink: 0;
+  }
+
+  .stat {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--muted);
+    letter-spacing: 1px;
+  }
+
+  .stat span { color: var(--accent); }
+
+  #dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--muted);
+    margin-left: auto;
+  }
+  #dot.live { background: var(--accent2); box-shadow: 0 0 6px var(--accent2); animation: pulse 1.5s infinite; }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  /* MOBILE */
+  @media (max-width: 650px) {
+    #sidebar { width: 200px; }
+    #channels { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); }
+    #player-section { height: 35vw; min-height: 160px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="sidebar">
+  <div id="sidebar-header">
+    <h1>&#9632; IPTV</h1>
+    <p>STREAM PORTAL // v1.0</p>
+  </div>
+  <div id="search-wrap">
+    <input type="text" id="search" placeholder="Search channels..." autocomplete="off">
+  </div>
+  <div id="group-tabs"></div>
+</div>
+
+<div id="main">
+  <div id="player-section">
+    <div id="video-container">
+      <div id="placeholder">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <rect x="2" y="3" width="20" height="14" rx="2"/><polyline points="8 21 12 17 16 21"/>
+        </svg>
+        <p>SELECT A CHANNEL TO WATCH</p>
+      </div>
+      <video id="player" controls></video>
+    </div>
+    <div id="now-playing-bar">
+      <span id="live-badge">&#11044; LIVE</span>
+      <span id="now-playing-name">--</span>
+      <span id="now-playing-url"></span>
+    </div>
+  </div>
+
+  <div id="channel-area">
+    <div id="group-title-bar">
+      <h2 id="group-label">All Channels</h2>
+      <div class="line"></div>
+      <span id="channel-count" class="stat"></span>
+    </div>
+    <div id="channels"></div>
+  </div>
+
+  <div id="status-bar">
+    <div class="stat">TOTAL: <span id="total-count">0</span> CH</div>
+    <div class="stat">GROUP: <span id="group-count">0</span></div>
+    <div class="stat" id="stream-status">STATUS: <span>IDLE</span></div>
+    <div id="dot"></div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.4.12/hls.min.js"></script>
+<script>
+const CHANNELS = [
+  // BD Sports
+  { name:"T-Sport",        group:"BD Sports",      url:"https://tvsen7.aynaott.com/tsports-hd/tracks-v1a1/mono.ts.m3u8",         icon:"⚽" },
+  { name:"RTV Sports",     group:"BD Sports",      url:"https://tvsen5.aynaott.com/PtvSports/tracks-v1a1/mono.ts.m3u8",          icon:"🏏" },
+  { name:"Asports",        group:"BD Sports",      url:"https://tvsen6.aynaott.com/asports/tracks-v1a1/mono.ts.m3u8",            icon:"🏅" },
+  { name:"GTV",            group:"BD Sports",      url:"https://tvsen5.aynaott.com/Ravc7gPCZpxk/tracks-v1a1/mono.ts.m3u8",      icon:"📺" },
+  { name:"Willow HD",      group:"BD Sports",      url:"https://tvsen5.aynaott.com/willowhd/tracks-v1a1/mono.ts.m3u8",           icon:"🏏" },
+  // INT Sports
+  { name:"ESPN",           group:"INT Sports",     url:"https://tvsen5.aynaott.com/espn/tracks-v1a1/mono.ts.m3u8",               icon:"🏆" },
+  { name:"Goal TV",        group:"INT Sports",     url:"https://streams2.sofast.tv/sofast/goaltv/goaltv_2500k.m3u8",             icon:"⚽" },
+  { name:"Sport TV",       group:"INT Sports",     url:"https://d4ddgdmj1cvnm.cloudfront.net/scheduler/scheduleMaster/409/variant/22100005.m3u8", icon:"🏅" },
+  { name:"Ch 476",         group:"INT Sports",     url:"https://dfhsahpa45kk2.cloudfront.net/scheduler/scheduleMaster/476/variant/22100056.m3u8", icon:"📡" },
+  // LOCAL (LAN)
+  { name:"TSport HD",      group:"LOCAL",          url:"http://172.16.29.2:8090/hls/tsportshd.m3u8",                            icon:"⚽", local:true },
+  { name:"SonyTen3 HD",    group:"LOCAL",          url:"http://172.16.29.2:8090/hls/SonyTen3hd.m3u8",                           icon:"🎬", local:true },
+  { name:"SS 1 Select",    group:"LOCAL",          url:"http://172.16.29.2:8090/hls/StarSportsSelect1HD.m3u8",                  icon:"⭐", local:true },
+  { name:"SS 2 Select",    group:"LOCAL",          url:"http://172.16.29.2:8090/hls/StarSportsSelect2HD.m3u8",                  icon:"⭐", local:true },
+  { name:"Star Sports 2",  group:"LOCAL",          url:"http://172.16.29.2:8090/hls/StarSports2HD.m3u8",                        icon:"⭐", local:true },
+  { name:"Star Sports 1",  group:"LOCAL",          url:"http://172.16.29.2:8090/hls/StarSports1HD.m3u8",                        icon:"⭐", local:true },
+  { name:"TNT Sport 2",    group:"LOCAL",          url:"http://172.16.29.2:8090/hls/tntsports2hd.m3u8",                         icon:"🥊", local:true },
+  { name:"TNT Sport 3",    group:"LOCAL",          url:"http://172.16.29.2:8090/hls/tntsports3hd.m3u8",                         icon:"🥊", local:true },
+  { name:"TNT Sport 4",    group:"LOCAL",          url:"http://172.16.29.2:8090/hls/tntsports4hd.m3u8",                         icon:"🥊", local:true },
+  { name:"Somoy TV",       group:"LOCAL",          url:"http://172.16.29.2:8090/hls/somoytv.m3u8",                              icon:"📰", local:true },
+  { name:"Zee Bangla HD",  group:"LOCAL",          url:"http://172.16.29.2:8090/hls/ZeeBanglaHD.m3u8",                         icon:"🎭", local:true },
+  { name:"Sony Ath",       group:"LOCAL",          url:"http://172.16.29.2:8090/hls/SonyAtth.m3u8",                             icon:"🎬", local:true },
+  { name:"Zee Cinema HD",  group:"LOCAL",          url:"http://172.16.29.2:8090/hls/ZeeBanglaCinemaHD.m3u8",                   icon:"🎬", local:true },
+  { name:"Star Jalsha HD", group:"LOCAL",          url:"http://172.16.29.2:8090/hls/StarJalshaHD.m3u8",                         icon:"🌟", local:true },
+  { name:"Sony HD",        group:"LOCAL",          url:"http://172.16.29.2:8090/hls/SonyHD.m3u8",                               icon:"🎬", local:true },
+  { name:"Zee TV HD",      group:"LOCAL",          url:"http://172.16.29.2:8090/hls/ZeeTVHD.m3u8",                              icon:"🎭", local:true },
+  { name:"Star Gold HD",   group:"LOCAL",          url:"http://172.16.29.2:8090/hls/StarGoldHD.m3u8",                           icon:"🌟", local:true },
+  { name:"Colors HD",      group:"LOCAL",          url:"http://172.16.29.2:8090/hls/ColorsHD.m3u8",                             icon:"🎨", local:true },
+  { name:"Sony Max HD",    group:"LOCAL",          url:"http://172.16.29.2:8090/hls/sonymaxhd.m3u8",                            icon:"🎬", local:true },
+  { name:"Star Plus HD",   group:"LOCAL",          url:"http://172.16.29.2:8090/hls/StarPlusHD.m3u8",                           icon:"⭐", local:true },
+  { name:"Al Jazeera",     group:"LOCAL",          url:"http://172.16.29.2:8090/hls/ALjazeeraNews.m3u8",                        icon:"🌍", local:true },
+  { name:"BBC World",      group:"LOCAL",          url:"http://172.16.29.2:8090/hls/bbc_world.m3u8",                            icon:"🌐", local:true },
+  { name:"Sangeet Bangla", group:"LOCAL",          url:"http://172.16.29.2:8090/hls/SangeetBangla.m3u8",                        icon:"🎵", local:true },
+  { name:"9XM",            group:"LOCAL",          url:"http://172.16.29.2:8090/hls/9xm.m3u8",                                  icon:"🎵", local:true },
+  { name:"Discovery Kids", group:"LOCAL",          url:"http://172.16.29.2:8090/hls/DiscoveryKids.m3u8",                        icon:"🧒", local:true },
+  { name:"And Pictures HD",group:"LOCAL",          url:"http://172.16.29.2:8090/hls/AndPictureHD.m3u8",                         icon:"🎬", local:true },
+  { name:"Star Movies HD", group:"LOCAL",          url:"http://172.16.29.2:8090/hls/StarMoviesHD.m3u8",                         icon:"🎬", local:true },
+  { name:"Discovery HD",   group:"LOCAL",          url:"http://172.16.29.2:8090/hls/DiscoveryHD.m3u8",                          icon:"🔭", local:true },
+  { name:"Nat Geo Wild",   group:"LOCAL",          url:"http://172.16.29.2:8090/hls/NatGeoWild.m3u8",                           icon:"🦁", local:true },
+  // BD Entertainment
+  { name:"Ananda TV",      group:"BD Entertainment", url:"https://tvsen6.aynaott.com/anandatv/tracks-v1a1/mono.ts.m3u8",        icon:"📺" },
+  { name:"Duranto TV",     group:"BD Entertainment", url:"https://tvsen6.aynaott.com/durontotv-live/tracks-v1a1/mono.ts.m3u8",  icon:"📺" },
+  { name:"RTV",            group:"BD Entertainment", url:"https://tvsen5.aynaott.com/RtvHD/tracks-v1a1/mono.ts.m3u8",           icon:"📺" },
+  { name:"ATN Bangla",     group:"BD Entertainment", url:"https://tvsen5.aynaott.com/atnbangla/tracks-v1a1/mono.ts.m3u8",       icon:"📺" },
+  { name:"Boishakhi TV",   group:"BD Entertainment", url:"https://tvsen6.aynaott.com/boishakhitv/tracks-v1a1/mono.ts.m3u8",     icon:"📺" },
+  { name:"Mytv",           group:"BD Entertainment", url:"https://tvsen6.aynaott.com/mytv/tracks-v1a1/mono.ts.m3u8",            icon:"📺" },
+  { name:"NTV",            group:"BD Entertainment", url:"https://tvsen5.aynaott.com/ntvbd/tracks-v1a1/mono.ts.m3u8",           icon:"📺" },
+  { name:"ETV",            group:"BD Entertainment", url:"https://tvsen6.aynaott.com/etv/tracks-v1a1/mono.ts.m3u8",             icon:"📺" },
+  { name:"Masranga TV",    group:"BD Entertainment", url:"https://tvsen5.aynaott.com/maasrangatv/tracks-v1a1/mono.ts.m3u8",     icon:"📺" },
+  { name:"Deepto TV",      group:"BD Entertainment", url:"https://tvsen5.aynaott.com/DeeptoTVHD/tracks-v1a1/mono.ts.m3u8",     icon:"📺" },
+  { name:"Desh TV",        group:"BD Entertainment", url:"https://tvsen6.aynaott.com/deshtv/tracks-v1a1/mono.ts.m3u8",          icon:"📺" },
+  { name:"Asian TV",       group:"BD Entertainment", url:"https://tvsen6.aynaott.com/asiantv/tracks-v1/mono.ts.m3u8",           icon:"📺" },
+  { name:"SATV",           group:"BD Entertainment", url:"https://tvsen6.aynaott.com/satv/tracks-v1a1/mono.ts.m3u8",            icon:"📺" },
+  { name:"Bangla TV",      group:"BD Entertainment", url:"https://tvsen6.aynaott.com/banglatv/tracks-v1a1/mono.ts.m3u8",        icon:"📺" },
+  { name:"Bijoy TV",       group:"BD Entertainment", url:"https://tvsen6.aynaott.com/bijoytv/tracks-v1a1/mono.ts.m3u8",         icon:"📺" },
+  { name:"Mohona TV",      group:"BD Entertainment", url:"https://tvsen6.aynaott.com/mohonatv/tracks-v1a1/mono.ts.m3u8",        icon:"📺" },
+  // BD News
+  { name:"Somoy TV",       group:"BD News",        url:"https://tvsen6.aynaott.com/somoytv/tracks-v1a1/mono.ts.m3u8",           icon:"📰" },
+  { name:"ATN News",       group:"BD News",        url:"https://tvsen6.aynaott.com/somoytv/tracks-v1a1/mono.ts.m3u8",           icon:"📰" },
+  { name:"Independent TV", group:"BD News",        url:"https://tvsen6.aynaott.com/independenttv/tracks-v1a1/mono.ts.m3u8",     icon:"📰" },
+  { name:"DBC News",       group:"BD News",        url:"https://tvsen6.aynaott.com/dbcnews/tracks-v1a1/mono.ts.m3u8",           icon:"📰" },
+  { name:"Ekhon TV",       group:"BD News",        url:"https://tvsen6.aynaott.com/ekhontv/tracks-v1a1/mono.ts.m3u8",           icon:"📰" },
+  { name:"News24",         group:"BD News",        url:"https://tvsen6.aynaott.com/news24/tracks-v1a1/mono.ts.m3u8",            icon:"📰" },
+  { name:"Ekkator TV",     group:"BD News",        url:"https://tvsen6.aynaott.com/ekattorbdtv/tracks-v1a1/mono.ts.m3u8",       icon:"📰" },
+  { name:"Jamuna TV",      group:"BD News",        url:"https://tvsen6.aynaott.com/jamunatv/tracks-v1a1/mono.ts.m3u8",          icon:"📰" },
+  // INT News
+  { name:"DW",             group:"INT News",       url:"https://dwamdstream102.akamaized.net/hls/live/2015525/dwstream102/stream04/streamPlaylist.m3u8", icon:"🌍" },
+  { name:"Fox Weather",    group:"INT News",       url:"https://247wlive.foxweather.com/stream/index_1280x720.m3u8",             icon:"🌤" },
+  { name:"ABP Bangla",     group:"INT News",       url:"https://d2l4ar6y3mrs4k.cloudfront.net/live-streaming/ananda-livetv/master_1280.m3u8", icon:"📰" },
+  // INT Movies
+  { name:"HBO",            group:"INT Movies",     url:"https://tvsen5.aynaott.com/hbo/tracks-v1a1/mono.ts.m3u8",               icon:"🎬" },
+  { name:"HBO2",           group:"INT Movies",     url:"https://tvsen7.aynaott.com/hbo2/tracks-v1a1/mono.ts.m3u8",              icon:"🎬" },
+  { name:"EPIX",           group:"INT Movies",     url:"https://tvsen7.aynaott.com/epix/tracks-v1a1/mono.ts.m3u8",              icon:"🎬" },
+  { name:"Hindi Movie",    group:"INT Movies",     url:"https://vods2.aynaott.com/hindimovies/tracks-v1a1/mono.ts.m3u8",        icon:"🎥" },
+  { name:"All Time Movie", group:"INT Movies",     url:"https://tvsen6.aynaott.com/Dhinchaak/tracks-v1a1/mono.ts.m3u8",         icon:"🎥" },
+  { name:"G Cinema",       group:"INT Movies",     url:"https://gcinemahls.wns.live/hls/stream.m3u8",                          icon:"🎥" },
+  // BD Music
+  { name:"Sangeet Bangla", group:"BD Music",       url:"https://cdn-4.pishow.tv/live/1143/1143_1.m3u8",                        icon:"🎵" },
+  // INT Music
+  { name:"9X Tashan",      group:"INT Music",      url:"https://tvsen6.aynaott.com/9X_Tashan/tracks-v1a1/mono.ts.m3u8",        icon:"🎶" },
+  { name:"9X Jalwa",       group:"INT Music",      url:"https://tvsen6.aynaott.com/9xjalwa/tracks-v1a1/mono.ts.m3u8",          icon:"🎶" },
+  // INT Entertainment
+  { name:"Sony ART",       group:"INT Entertainment", url:"https://live20.bozztv.com/giatvplayout7/giatv-209611/tracks-v1a1/mono.ts.m3u8", icon:"🎭" },
+  { name:"Madani Bangla",  group:"INT Entertainment", url:"https://streaming.madanichannel.tv/static/streaming-playlists/hls/d3e49b76-ac06-4689-a641-9200445b647f/3.m3u8", icon:"☪️" },
+  { name:"Power TV",       group:"INT Entertainment", url:"https://livetv.powerapp.com.tr/powerturkTV/powerturkhd.smil/chunklist_b2496000_sltur.m3u8", icon:"📺" },
+  { name:"Korea TV",       group:"INT Entertainment", url:"https://korhls.persiana.live/hls/stream.m3u8",                      icon:"🇰🇷" },
+  { name:"Mix TV",         group:"INT Entertainment", url:"https://ml-pull-hwc.myco.io/MixTV/hls/MixTV_H264-720p.m3u8",        icon:"📺" },
+  { name:"Shamerao TV",    group:"INT Entertainment", url:"https://cdn-3.pishow.tv/live/230/230_1.m3u8",                       icon:"📺" },
+  { name:"Zoom TV",        group:"INT Entertainment", url:"https://mumbai-edge.smartplaytv.in/Zoom/tracks-v1a1/mono.m3u8",     icon:"📺" },
+  { name:"Akash Crimes",   group:"INT Entertainment", url:"https://nomawnoijl.gpcdn.net/akash/crimes/chunks.m3u8",            icon:"🔍" },
+  { name:"Akash Uniques",  group:"INT Entertainment", url:"https://nomawnoijl.gpcdn.net/akash/uniques/chunks.m3u8",           icon:"✨" },
+  { name:"Ch 1459",        group:"INT Entertainment", url:"https://cdn-2.pishow.tv/live/1459/1459_1.m3u8",                    icon:"📡" },
+  // INT Lifestyle
+  { name:"Travel XP",      group:"INT Lifestyle",  url:"https://tvsen6.aynaott.com/travelxp/tracks-v1a1/mono.ts.m3u8",        icon:"✈️" },
+  { name:"Aventure Earth", group:"INT Lifestyle",  url:"https://autentic-adventure-earth-1-eu.rakuten.wurl.tv/3000.m3u8",     icon:"🌍" },
+  { name:"Discovery PK",   group:"INT Lifestyle",  url:"https://livecdn.live247stream.com/discoverpakistan/web/discoverpakistan/q_720p/chunks.m3u8", icon:"🔭" },
+  { name:"Weather Spy",    group:"INT Lifestyle",  url:"https://jukin-weatherspy-2-in.samsung.wurl.tv/3000.m3u8",             icon:"🌦" },
+  { name:"Animal Planet",  group:"INT Lifestyle",  url:"https://vodzong.mjunoon.tv:8087/streamtest/Animal-Planet-158-3/live/158-3M/chunks.m3u8", icon:"🦁" },
+  // Kids
+  { name:"Cartoon Network",group:"Kids",           url:"https://tvsen5.aynaott.com/cartoonnetwork/tracks-v1a1/mono.ts.m3u8",   icon:"🧒" },
+];
+
+const groups = ["All", ...new Set(CHANNELS.map(c => c.group))];
+let activeGroup = "All";
+let activeCard = null;
+let hls = null;
+let searchQ = "";
+
+const video = document.getElementById("player");
+const placeholder = document.getElementById("placeholder");
+const nowName = document.getElementById("now-playing-name");
+const nowUrl = document.getElementById("now-playing-url");
+const liveBadge = document.getElementById("live-badge");
+const dot = document.getElementById("dot");
+const streamStatus = document.getElementById("stream-status");
+const channelsEl = document.getElementById("channels");
+const groupLabel = document.getElementById("group-label");
+const channelCount = document.getElementById("channel-count");
+const totalCount = document.getElementById("total-count");
+const groupCount = document.getElementById("group-count");
+
+// Build sidebar group tabs
+const tabsEl = document.getElementById("group-tabs");
+totalCount.textContent = CHANNELS.length;
+groupCount.textContent = groups.length - 1;
+
+function buildTabs() {
+  tabsEl.innerHTML = "";
+  groups.forEach(g => {
+    const cnt = g === "All" ? CHANNELS.length : CHANNELS.filter(c => c.group === g).length;
+    const tab = document.createElement("div");
+    tab.className = "group-tab" + (g === activeGroup ? " active" : "");
+    tab.innerHTML = `${g}<span class="count">${cnt}</span>`;
+    tab.onclick = () => { activeGroup = g; buildTabs(); renderChannels(); };
+    tabsEl.appendChild(tab);
+  });
+}
+
+function getFiltered() {
+  let list = activeGroup === "All" ? CHANNELS : CHANNELS.filter(c => c.group === activeGroup);
+  if (searchQ) list = list.filter(c => c.name.toLowerCase().includes(searchQ) || c.group.toLowerCase().includes(searchQ));
+  return list;
+}
+
+function renderChannels() {
+  const list = getFiltered();
+  groupLabel.textContent = activeGroup === "All" ? "All Channels" : activeGroup;
+  channelCount.innerHTML = `<span>${list.length}</span> CH`;
+  channelsEl.innerHTML = "";
+  list.forEach(ch => {
+    const card = document.createElement("div");
+    card.className = "ch-card";
+    if (activeCard && activeCard.url === ch.url && activeCard.name === ch.name) card.classList.add("active");
+    card.innerHTML = `
+      <div class="ch-icon">${ch.icon}</div>
+      <div class="ch-name">${ch.name}</div>
+      <div class="ch-group">${ch.group}</div>
+      ${ch.local ? '<div class="ch-local-badge">◉ LAN</div>' : ''}
+    `;
+    card.onclick = () => playChannel(ch, card);
+    channelsEl.appendChild(card);
+  });
+}
+
+function playChannel(ch, card) {
+  // Deactivate old
+  document.querySelectorAll(".ch-card.active").forEach(c => c.classList.remove("active"));
+  card.classList.add("active");
+  activeCard = ch;
+
+  nowName.textContent = ch.name;
+  nowUrl.textContent = ch.url;
+  liveBadge.style.display = "inline-block";
+  placeholder.style.display = "none";
+  video.style.display = "block";
+
+  streamStatus.innerHTML = 'STATUS: <span style="color:var(--accent)">CONNECTING</span>';
+  dot.className = "";
+
+  if (hls) { hls.destroy(); hls = null; }
+
+  if (Hls.isSupported()) {
+    hls = new Hls({ enableWorker: true, lowLatencyMode: true });
+    hls.loadSource(ch.url);
+    hls.attachMedia(video);
+    hls.on(Hls.Events.MANIFEST_PARSED, () => {
+      video.play().catch(() => {});
+      streamStatus.innerHTML = 'STATUS: <span style="color:var(--green)">LIVE</span>';
+      dot.className = "live";
+    });
+    hls.on(Hls.Events.ERROR, (e, data) => {
+      if (data.fatal) {
+        streamStatus.innerHTML = 'STATUS: <span style="color:var(--accent2)">ERROR</span>';
+        dot.className = "";
+      }
+    });
+  } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
+    video.src = ch.url;
+    video.play().catch(() => {});
+    streamStatus.innerHTML = 'STATUS: <span style="color:var(--green)">LIVE</span>';
+    dot.className = "live";
+  } else {
+    streamStatus.innerHTML = 'STATUS: <span style="color:var(--accent2)">NO HLS SUPPORT</span>';
+  }
+}
+
+document.getElementById("search").addEventListener("input", e => {
+  searchQ = e.target.value.toLowerCase().trim();
+  renderChannels();
+});
+
+buildTabs();
+renderChannels();
+</script>
+</body>
+</html>
