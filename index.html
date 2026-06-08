@@ -30,7 +30,6 @@
     overflow: hidden;
   }
 
-  /* SIDEBAR */
   #sidebar {
     width: var(--sidebar-w);
     background: var(--panel);
@@ -117,7 +116,6 @@
   }
   .group-tab.active .count { color: var(--accent); }
 
-  /* MAIN */
   #main {
     flex: 1;
     display: flex;
@@ -125,12 +123,11 @@
     overflow: hidden;
   }
 
-  /* PLAYER */
   #player-section {
     background: #000;
     border-bottom: 1px solid var(--border);
     position: relative;
-    height: 42vh;
+    height: 60vh;
     flex-shrink: 0;
   }
 
@@ -206,7 +203,6 @@
     white-space: nowrap;
   }
 
-  /* CHANNEL GRID */
   #channel-area {
     flex: 1;
     overflow-y: auto;
@@ -308,13 +304,11 @@
     letter-spacing: 1px;
   }
 
-  /* SCROLLBAR */
-  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
   ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
 
-  /* STATUS BAR */
   #status-bar {
     padding: 5px 16px;
     border-top: 1px solid var(--border);
@@ -347,11 +341,73 @@
     50% { opacity: 0.4; }
   }
 
-  /* MOBILE */
-  @media (max-width: 650px) {
-    #sidebar { width: 200px; }
-    #channels { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); }
-    #player-section { height: 35vw; min-height: 160px; }
+  @media (max-width: 768px) {
+    body {
+      flex-direction: column;
+    }
+
+    #sidebar {
+      width: 100%;
+      height: auto;
+      border-right: none;
+      border-bottom: 1px solid var(--border);
+    }
+
+    #sidebar-header {
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    #sidebar-header p {
+      margin-top: 0;
+    }
+
+    #search-wrap {
+      padding: 8px 14px;
+    }
+
+    #group-tabs {
+      flex-direction: row;
+      overflow-x: auto;
+      overflow-y: hidden;
+      white-space: nowrap;
+      scroll-behavior: smooth;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .group-tab {
+      padding: 10px 16px;
+      border-left: none;
+      border-bottom: 2px solid transparent;
+    }
+
+    .group-tab.active {
+      border-left-color: transparent;
+      border-bottom-color: var(--accent);
+    }
+
+    .group-tab .count {
+      margin-left: 4px;
+    }
+
+    #player-section {
+      height: 35vh;
+    }
+
+    #now-playing-url {
+      display: none;
+    }
+
+    #channels {
+      grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+      gap: 6px;
+    }
+
+    .ch-card {
+      padding: 8px;
+    }
   }
 </style>
 </head>
@@ -406,18 +462,15 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.4.12/hls.min.js"></script>
 <script>
 const CHANNELS = [
-  // BD Sports
   { name:"T-Sport",        group:"BD Sports",      url:"https://tvsen7.aynaott.com/tsports-hd/tracks-v1a1/mono.ts.m3u8",         icon:"⚽" },
   { name:"RTV Sports",     group:"BD Sports",      url:"https://tvsen5.aynaott.com/PtvSports/tracks-v1a1/mono.ts.m3u8",          icon:"🏏" },
   { name:"Asports",        group:"BD Sports",      url:"https://tvsen6.aynaott.com/asports/tracks-v1a1/mono.ts.m3u8",            icon:"🏅" },
   { name:"GTV",            group:"BD Sports",      url:"https://tvsen5.aynaott.com/Ravc7gPCZpxk/tracks-v1a1/mono.ts.m3u8",      icon:"📺" },
   { name:"Willow HD",      group:"BD Sports",      url:"https://tvsen5.aynaott.com/willowhd/tracks-v1a1/mono.ts.m3u8",           icon:"🏏" },
-  // INT Sports
   { name:"ESPN",           group:"INT Sports",     url:"https://tvsen5.aynaott.com/espn/tracks-v1a1/mono.ts.m3u8",               icon:"🏆" },
   { name:"Goal TV",        group:"INT Sports",     url:"https://streams2.sofast.tv/sofast/goaltv/goaltv_2500k.m3u8",             icon:"⚽" },
   { name:"Sport TV",       group:"INT Sports",     url:"https://d4ddgdmj1cvnm.cloudfront.net/scheduler/scheduleMaster/409/variant/22100005.m3u8", icon:"🏅" },
   { name:"Ch 476",         group:"INT Sports",     url:"https://dfhsahpa45kk2.cloudfront.net/scheduler/scheduleMaster/476/variant/22100056.m3u8", icon:"📡" },
-  // LOCAL (LAN)
   { name:"TSport HD",      group:"LOCAL",          url:"http://172.16.29.2:8090/hls/tsportshd.m3u8",                            icon:"⚽", local:true },
   { name:"SonyTen3 HD",    group:"LOCAL",          url:"http://172.16.29.2:8090/hls/SonyTen3hd.m3u8",                           icon:"🎬", local:true },
   { name:"SS 1 Select",    group:"LOCAL",          url:"http://172.16.29.2:8090/hls/StarSportsSelect1HD.m3u8",                  icon:"⭐", local:true },
@@ -447,7 +500,6 @@ const CHANNELS = [
   { name:"Star Movies HD", group:"LOCAL",          url:"http://172.16.29.2:8090/hls/StarMoviesHD.m3u8",                         icon:"🎬", local:true },
   { name:"Discovery HD",   group:"LOCAL",          url:"http://172.16.29.2:8090/hls/DiscoveryHD.m3u8",                          icon:"🔭", local:true },
   { name:"Nat Geo Wild",   group:"LOCAL",          url:"http://172.16.29.2:8090/hls/NatGeoWild.m3u8",                           icon:"🦁", local:true },
-  // BD Entertainment
   { name:"Ananda TV",      group:"BD Entertainment", url:"https://tvsen6.aynaott.com/anandatv/tracks-v1a1/mono.ts.m3u8",        icon:"📺" },
   { name:"Duranto TV",     group:"BD Entertainment", url:"https://tvsen6.aynaott.com/durontotv-live/tracks-v1a1/mono.ts.m3u8",  icon:"📺" },
   { name:"RTV",            group:"BD Entertainment", url:"https://tvsen5.aynaott.com/RtvHD/tracks-v1a1/mono.ts.m3u8",           icon:"📺" },
@@ -464,7 +516,6 @@ const CHANNELS = [
   { name:"Bangla TV",      group:"BD Entertainment", url:"https://tvsen6.aynaott.com/banglatv/tracks-v1a1/mono.ts.m3u8",        icon:"📺" },
   { name:"Bijoy TV",       group:"BD Entertainment", url:"https://tvsen6.aynaott.com/bijoytv/tracks-v1a1/mono.ts.m3u8",         icon:"📺" },
   { name:"Mohona TV",      group:"BD Entertainment", url:"https://tvsen6.aynaott.com/mohonatv/tracks-v1a1/mono.ts.m3u8",        icon:"📺" },
-  // BD News
   { name:"Somoy TV",       group:"BD News",        url:"https://tvsen6.aynaott.com/somoytv/tracks-v1a1/mono.ts.m3u8",           icon:"📰" },
   { name:"ATN News",       group:"BD News",        url:"https://tvsen6.aynaott.com/somoytv/tracks-v1a1/mono.ts.m3u8",           icon:"📰" },
   { name:"Independent TV", group:"BD News",        url:"https://tvsen6.aynaott.com/independenttv/tracks-v1a1/mono.ts.m3u8",     icon:"📰" },
@@ -473,23 +524,18 @@ const CHANNELS = [
   { name:"News24",         group:"BD News",        url:"https://tvsen6.aynaott.com/news24/tracks-v1a1/mono.ts.m3u8",            icon:"📰" },
   { name:"Ekkator TV",     group:"BD News",        url:"https://tvsen6.aynaott.com/ekattorbdtv/tracks-v1a1/mono.ts.m3u8",       icon:"📰" },
   { name:"Jamuna TV",      group:"BD News",        url:"https://tvsen6.aynaott.com/jamunatv/tracks-v1a1/mono.ts.m3u8",          icon:"📰" },
-  // INT News
   { name:"DW",             group:"INT News",       url:"https://dwamdstream102.akamaized.net/hls/live/2015525/dwstream102/stream04/streamPlaylist.m3u8", icon:"🌍" },
   { name:"Fox Weather",    group:"INT News",       url:"https://247wlive.foxweather.com/stream/index_1280x720.m3u8",             icon:"🌤" },
   { name:"ABP Bangla",     group:"INT News",       url:"https://d2l4ar6y3mrs4k.cloudfront.net/live-streaming/ananda-livetv/master_1280.m3u8", icon:"📰" },
-  // INT Movies
   { name:"HBO",            group:"INT Movies",     url:"https://tvsen5.aynaott.com/hbo/tracks-v1a1/mono.ts.m3u8",               icon:"🎬" },
   { name:"HBO2",           group:"INT Movies",     url:"https://tvsen7.aynaott.com/hbo2/tracks-v1a1/mono.ts.m3u8",              icon:"🎬" },
   { name:"EPIX",           group:"INT Movies",     url:"https://tvsen7.aynaott.com/epix/tracks-v1a1/mono.ts.m3u8",              icon:"🎬" },
   { name:"Hindi Movie",    group:"INT Movies",     url:"https://vods2.aynaott.com/hindimovies/tracks-v1a1/mono.ts.m3u8",        icon:"🎥" },
   { name:"All Time Movie", group:"INT Movies",     url:"https://tvsen6.aynaott.com/Dhinchaak/tracks-v1a1/mono.ts.m3u8",         icon:"🎥" },
   { name:"G Cinema",       group:"INT Movies",     url:"https://gcinemahls.wns.live/hls/stream.m3u8",                          icon:"🎥" },
-  // BD Music
   { name:"Sangeet Bangla", group:"BD Music",       url:"https://cdn-4.pishow.tv/live/1143/1143_1.m3u8",                        icon:"🎵" },
-  // INT Music
   { name:"9X Tashan",      group:"INT Music",      url:"https://tvsen6.aynaott.com/9X_Tashan/tracks-v1a1/mono.ts.m3u8",        icon:"🎶" },
   { name:"9X Jalwa",       group:"INT Music",      url:"https://tvsen6.aynaott.com/9xjalwa/tracks-v1a1/mono.ts.m3u8",          icon:"🎶" },
-  // INT Entertainment
   { name:"Sony ART",       group:"INT Entertainment", url:"https://live20.bozztv.com/giatvplayout7/giatv-209611/tracks-v1a1/mono.ts.m3u8", icon:"🎭" },
   { name:"Madani Bangla",  group:"INT Entertainment", url:"https://streaming.madanichannel.tv/static/streaming-playlists/hls/d3e49b76-ac06-4689-a641-9200445b647f/3.m3u8", icon:"☪️" },
   { name:"Power TV",       group:"INT Entertainment", url:"https://livetv.powerapp.com.tr/powerturkTV/powerturkhd.smil/chunklist_b2496000_sltur.m3u8", icon:"📺" },
@@ -500,13 +546,11 @@ const CHANNELS = [
   { name:"Akash Crimes",   group:"INT Entertainment", url:"https://nomawnoijl.gpcdn.net/akash/crimes/chunks.m3u8",            icon:"🔍" },
   { name:"Akash Uniques",  group:"INT Entertainment", url:"https://nomawnoijl.gpcdn.net/akash/uniques/chunks.m3u8",           icon:"✨" },
   { name:"Ch 1459",        group:"INT Entertainment", url:"https://cdn-2.pishow.tv/live/1459/1459_1.m3u8",                    icon:"📡" },
-  // INT Lifestyle
   { name:"Travel XP",      group:"INT Lifestyle",  url:"https://tvsen6.aynaott.com/travelxp/tracks-v1a1/mono.ts.m3u8",        icon:"✈️" },
   { name:"Aventure Earth", group:"INT Lifestyle",  url:"https://autentic-adventure-earth-1-eu.rakuten.wurl.tv/3000.m3u8",     icon:"🌍" },
   { name:"Discovery PK",   group:"INT Lifestyle",  url:"https://livecdn.live247stream.com/discoverpakistan/web/discoverpakistan/q_720p/chunks.m3u8", icon:"🔭" },
   { name:"Weather Spy",    group:"INT Lifestyle",  url:"https://jukin-weatherspy-2-in.samsung.wurl.tv/3000.m3u8",             icon:"🌦" },
   { name:"Animal Planet",  group:"INT Lifestyle",  url:"https://vodzong.mjunoon.tv:8087/streamtest/Animal-Planet-158-3/live/158-3M/chunks.m3u8", icon:"🦁" },
-  // Kids
   { name:"Cartoon Network",group:"Kids",           url:"https://tvsen5.aynaott.com/cartoonnetwork/tracks-v1a1/mono.ts.m3u8",   icon:"🧒" },
 ];
 
@@ -529,7 +573,6 @@ const channelCount = document.getElementById("channel-count");
 const totalCount = document.getElementById("total-count");
 const groupCount = document.getElementById("group-count");
 
-// Build sidebar group tabs
 const tabsEl = document.getElementById("group-tabs");
 totalCount.textContent = CHANNELS.length;
 groupCount.textContent = groups.length - 1;
@@ -573,7 +616,6 @@ function renderChannels() {
 }
 
 function playChannel(ch, card) {
-  // Deactivate old
   document.querySelectorAll(".ch-card.active").forEach(c => c.classList.remove("active"));
   card.classList.add("active");
   activeCard = ch;
